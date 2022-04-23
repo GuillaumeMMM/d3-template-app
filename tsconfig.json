@@ -7,6 +7,7 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "noImplicitOverride": true,
+    "allowSyntheticDefaultImports": true,
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
@@ -21,7 +22,9 @@
     "lib": [
       "es2020",
       "dom"
-    ]
+    ],
+    "esModuleInterop": true,
+    "resolveJsonModule": true
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

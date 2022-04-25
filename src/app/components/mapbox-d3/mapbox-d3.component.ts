@@ -1,9 +1,12 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit } from '@angular/core';
 import { asyncScheduler, Subject, takeUntil, throttleTime } from 'rxjs';
 import { WindowService } from 'src/app/services/window.service';
-import mapboxgl from 'mapbox-gl';
+import mapboxgl, { MapBoxZoomEvent } from 'mapbox-gl';
 import * as d3 from 'd3';
 import { environment } from 'src/environments/environment';
+import { EmojiService } from 'src/app/services/emoji.service';
+import { ClusterService } from 'src/app/services/cluster.service';
+import { FeatureTree, TreeGroup } from 'src/app/models/arbre';
 
 @Component({
   selector: 'app-mapbox-d3',
@@ -12,7 +15,7 @@ import { environment } from 'src/environments/environment';
 })
 export class MapboxD3Component implements OnInit, AfterViewInit, OnDestroy {
 
-  constructor(private el: ElementRef, private windowService: WindowService) { }
+  constructor(private el: ElementRef, private windowService: WindowService, private clusterService: ClusterService) { }
 
   private destroySubject$: Subject<void> = new Subject;
   private width: number = 0;
@@ -20,6 +23,12 @@ export class MapboxD3Component implements OnInit, AfterViewInit, OnDestroy {
   private svg: d3.Selection<any, unknown, null, undefined> = d3.select(null);
   private graphContainer: d3.Selection<any, unknown, null, undefined> = d3.select(null);
   private map: mapboxgl.Map | undefined;
+  private zoomLevelSnapshot: number = 10;
+  private zoomLevel: number = 10;
+
+  private treesData: TreeGroup[] = [];
+  private geoJsonData: FeatureTree[] = [];
+  private displayedTreesData: TreeGroup[] = [];
 
   ngOnInit(): void {
     this.windowService.windowResize$.pipe(
@@ -28,10 +37,6 @@ export class MapboxD3Component implements OnInit, AfterViewInit, OnDestroy {
     ).subscribe(newSize => {
       this.width = (this.el.nativeElement as HTMLElement).getBoundingClientRect().width;
       this.height = (this.el.nativeElement as HTMLElement).getBoundingClientRect().height;
-
-      /* this.resetSVG();
-      this.initSVG(this.width, this.height);
-      this.initGraph(); */
     });
   }
 
@@ -46,9 +51,8 @@ export class MapboxD3Component implements OnInit, AfterViewInit, OnDestroy {
       container: 'map',
       style: 'mapbox://styles/guillaumemmm/cl1l2bik7000n15plm468rsxh',
       center: [2.349014, 48.864716],
-      zoom: 10,
+      zoom: this.zoomLevelSnapshot,
       accessToken: environment.mapboxToken
-      /* accessToken: 'pk.eyJ1IjoiZ3VpbGxhdW1lbW1tIiwiYSI6ImNqeGgydDBvYzB3YjYzdmxpMXVodWxqM3gifQ.sIm22fQjZ-B4yY72oKxSyQ' */
     });
 
     const container = this.map.getCanvasContainer();
@@ -63,19 +67,17 @@ export class MapboxD3Component implements OnInit, AfterViewInit, OnDestroy {
 
     this.graphContainer = this.svg.append('g').attr('class', 'svg-graph-container');
 
-    d3.json('../../../assets/les-arbres-plantes.geojson').then((geojsonArbres: any) => {
-      const arbres = this.graphContainer.append("g");
-      arbres.selectAll("path")
-        .data(geojsonArbres.features)
-        .enter()
-        .append("circle")
-        .attr('r', '3px')
-        .attr('stroke', 'red')
-        .attr('stroke-width', 1)
-        .attr('fill', 'lightgreen')
+    this.graphContainer.append('g').attr('class', 'emojis-container');
 
+    d3.json('../../../assets/les-arbres-plantes.geojson')
+      .then((geojsonArbres) => {
+
+      this.geoJsonData = (geojsonArbres as {features: FeatureTree[]}).features;
+      this.treesData = this.clusterService.getClusterData(this.geoJsonData.slice());
+      this.displayedTreesData = this.treesData.slice();
+      
       this.map?.on("viewreset", this.render);
-      this.map?.on("move", this.render);
+      this.map?.on("move", this.onMove);
       this.map?.on("moveend", this.render);
       this.render();
     });
@@ -85,16 +87,42 @@ export class MapboxD3Component implements OnInit, AfterViewInit, OnDestroy {
     return this.map?.project(new mapboxgl.LngLat(d[0], d[1]));
   }
 
+  private onMove = (event: WheelEvent) => {
+    if (this.zoomLevel !== this.map?.getZoom() as number) {
+      this.updateData();
+    }
+
+    this.zoomLevel = this.map?.getZoom() as number;
+    if (event.type === 'move' && Math.abs(this.zoomLevel - this.zoomLevelSnapshot) > 0.5) {
+      this.zoomLevelSnapshot = +this.zoomLevel;
+    }
+
+    this.render();
+    
+  }
+
   private render = (): void => {
-    this.graphContainer.selectAll('circle')
-      .attr('cx', (d, i) => {
-        const coordinates = this.project((d as any).geometry.coordinates)
-        return coordinates && coordinates.x ? `${coordinates.x}px` : '0px';
-      })
-      .attr('cy', (d, i) => {
-        const coordinates = this.project((d as any).geometry.coordinates)
-        return coordinates && coordinates.y ? `${coordinates.y}px` : '0px';
-      });
+    this.displayedTreesData = this.treesData.filter(group => this.clusterService.isVisibleElement(group, this.map)).slice();
+    const emojis = this.graphContainer.select('.emojis-container').selectAll(".emoji").data(this.displayedTreesData);
+
+    emojis.exit().remove();
+
+    emojis.enter()
+    .append('text').text('🌳').attr('class', 'emoji')
+    .merge(emojis as any)
+    .style('font-size', this.zoomLevel > 15 ? '30px' : '10px')
+    .attr('x', (d, i) => {
+      const coordinates = this.project((d as any).geometry.coordinates)
+      return coordinates && coordinates.x ? `${coordinates.x}px` : '0px';
+    })
+    .attr('y', (d, i) => {
+      const coordinates = this.project((d as any).geometry.coordinates)
+      return coordinates && coordinates.y ? `${coordinates.y}px` : '0px';
+    })
+  }
+
+  private updateData = () => {
+    this.treesData = this.clusterService.getClusterData(this.geoJsonData.slice(), this.zoomLevelSnapshot);
   }
 
   ngOnDestroy() {

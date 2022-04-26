@@ -51,6 +51,8 @@ export class MapboxD3Component implements OnInit, AfterViewInit, OnDestroy {
       container: 'map',
       style: 'mapbox://styles/guillaumemmm/cl1l2bik7000n15plm468rsxh',
       center: [2.349014, 48.864716],
+      minZoom: 7.5,
+      maxZoom: 17,
       zoom: this.zoomLevelSnapshot,
       accessToken: environment.mapboxToken
     });
@@ -89,7 +91,7 @@ export class MapboxD3Component implements OnInit, AfterViewInit, OnDestroy {
 
   private onMove = (event: WheelEvent) => {
     if (this.zoomLevel !== this.map?.getZoom() as number) {
-      this.updateData();
+      this.updateData(this.zoomLevel < (this.map?.getZoom() as number));
     }
 
     this.zoomLevel = this.map?.getZoom() as number;
@@ -98,19 +100,24 @@ export class MapboxD3Component implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.render();
-    
   }
 
   private render = (): void => {
-    this.displayedTreesData = this.treesData.filter(group => this.clusterService.isVisibleElement(group, this.map)).slice();
-    const emojis = this.graphContainer.select('.emojis-container').selectAll(".emoji").data(this.displayedTreesData);
 
+    const bounds = this.map?.getBounds();
+    const xBound: [number, number] = [bounds?.getWest() as number, bounds?.getEast() as number];
+    const yBound: [number, number] = [bounds?.getNorth() as number, bounds?.getSouth() as number];
+    
+    this.displayedTreesData = this.treesData.filter(group => this.clusterService.isVisibleElement(group, xBound, yBound)).slice().filter(tree => tree.trees && tree.trees.length > 0);
+    
+    const emojis = this.graphContainer.select('.emojis-container').selectAll(".emoji").data(this.displayedTreesData);
+    
     emojis.exit().remove();
 
     emojis.enter()
     .append('text').text('🌳').attr('class', 'emoji')
     .merge(emojis as any)
-    .style('font-size', this.zoomLevel > 15 ? '30px' : '10px')
+    .style('font-size', this.zoomLevel > 15 ? '20px' : '10px')
     .attr('x', (d, i) => {
       const coordinates = this.project((d as any).geometry.coordinates)
       return coordinates && coordinates.x ? `${coordinates.x}px` : '0px';
@@ -118,11 +125,11 @@ export class MapboxD3Component implements OnInit, AfterViewInit, OnDestroy {
     .attr('y', (d, i) => {
       const coordinates = this.project((d as any).geometry.coordinates)
       return coordinates && coordinates.y ? `${coordinates.y}px` : '0px';
-    })
+    });
   }
 
-  private updateData = () => {
-    this.treesData = this.clusterService.getClusterData(this.geoJsonData.slice(), this.zoomLevelSnapshot);
+  private updateData = (zoomingIn: boolean) => {
+    this.treesData = this.clusterService.getClusterData(this.geoJsonData.slice(), this.zoomLevelSnapshot, zoomingIn);
   }
 
   ngOnDestroy() {

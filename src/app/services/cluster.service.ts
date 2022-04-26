@@ -11,16 +11,24 @@ export class ClusterService {
   }
 
   private ratioScale = d3.scaleLinear().domain([7, 14.5]).range([0.05, 0.001]);
+  private treeGroupsSnapshot: TreeGroup[] = [];
 
-  public getClusterData = (trees: FeatureTree[], zoom: number = 10): TreeGroup[] => {
-    let treeGroups: TreeGroup[] = [
-      {
-        geometry: trees[0].geometry,
-        trees: [trees[0]]
-      }
-    ];
+  public getClusterData = (trees: FeatureTree[], zoom: number = 10, zoomingIn: boolean = false): TreeGroup[] => {
+    let treeGroups: TreeGroup[] = [];
+
+    if (zoomingIn && this.treeGroupsSnapshot) {
+      treeGroups = this.treeGroupsSnapshot.map(group => {
+        return {...group, trees: []}
+      });
+    }
+
+    treeGroups[0] = {
+      geometry: trees[0].geometry,
+      trees: [trees[0]]
+    }
 
     const ratio = this.getRatioForZoom(zoom);
+
     for (let i = 1; i < trees.length; i++) {
       //  0.002 is the ratio for which all trees will be displayed
       const matchingGroup: TreeGroup | undefined = ratio > 0.002 ? treeGroups.find(treeGroup => {
@@ -38,7 +46,7 @@ export class ClusterService {
     }
 
     /* treeGroups = this.computeGroupCeters(treeGroups); */
-
+    this.treeGroupsSnapshot = treeGroups;
     return treeGroups;
   }
 
@@ -46,11 +54,7 @@ export class ClusterService {
     return Math.sqrt(Math.pow(pointB[0] - pointA[0], 2) + Math.pow(pointB[1] - pointA[1], 2));
   }
   
-  public isVisibleElement = (group: TreeGroup, map: mapboxgl.Map | undefined): boolean => {
-    const bounds = map?.getBounds();
-    const xBound: [number, number] = [bounds?.getWest() as number, bounds?.getEast() as number];
-    const yBound: [number, number] = [bounds?.getNorth() as number, bounds?.getSouth() as number];
-
+  public isVisibleElement = (group: TreeGroup, xBound: [number, number], yBound: [number, number]): boolean => {
     return group.geometry.coordinates[0] >= xBound[0] && group.geometry.coordinates[0] <= xBound[1]
       && group.geometry.coordinates[1] <= yBound[0] && group.geometry.coordinates[1] >= yBound[1];
   }

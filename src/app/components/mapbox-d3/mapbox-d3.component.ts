@@ -7,6 +7,7 @@ import { environment } from 'src/environments/environment';
 import { EmojiService } from 'src/app/services/emoji.service';
 import { ClusterService } from 'src/app/services/cluster.service';
 import { FeatureTree, TreeGroup } from 'src/app/models/arbre';
+import { MapService } from 'src/app/services/map.service';
 
 @Component({
   selector: 'app-mapbox-d3',
@@ -15,7 +16,7 @@ import { FeatureTree, TreeGroup } from 'src/app/models/arbre';
 })
 export class MapboxD3Component implements OnInit, AfterViewInit, OnDestroy {
 
-  constructor(private el: ElementRef, private windowService: WindowService, private clusterService: ClusterService) { }
+  constructor(private el: ElementRef, private windowService: WindowService, private clusterService: ClusterService, private mapService: MapService) { }
 
   private destroySubject$: Subject<void> = new Subject;
   private width: number = 0;
@@ -69,7 +70,8 @@ export class MapboxD3Component implements OnInit, AfterViewInit, OnDestroy {
 
     this.graphContainer = this.svg.append('g').attr('class', 'svg-graph-container');
 
-    this.graphContainer.append('g').attr('class', 'emojis-container');
+    this.graphContainer.append('g').attr('class', 'trees-container');
+    this.graphContainer.append('g').attr('class', 'clusters-container');
 
     d3.json('../../../assets/les-arbres-plantes.geojson')
       .then((geojsonArbres) => {
@@ -83,10 +85,6 @@ export class MapboxD3Component implements OnInit, AfterViewInit, OnDestroy {
       this.map?.on("moveend", this.render);
       this.render();
     });
-  }
-
-  private project = (d: number[]) => {
-    return this.map?.project(new mapboxgl.LngLat(d[0], d[1]));
   }
 
   private onMove = (event: WheelEvent) => {
@@ -103,29 +101,13 @@ export class MapboxD3Component implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private render = (): void => {
-
     const bounds = this.map?.getBounds();
     const xBound: [number, number] = [bounds?.getWest() as number, bounds?.getEast() as number];
     const yBound: [number, number] = [bounds?.getNorth() as number, bounds?.getSouth() as number];
     
     this.displayedTreesData = this.treesData.filter(group => this.clusterService.isVisibleElement(group, xBound, yBound)).slice().filter(tree => tree.trees && tree.trees.length > 0);
     
-    const emojis = this.graphContainer.select('.emojis-container').selectAll(".emoji").data(this.displayedTreesData);
-    
-    emojis.exit().remove();
-
-    emojis.enter()
-    .append('text').text('🌳').attr('class', 'emoji')
-    .merge(emojis as any)
-    .style('font-size', this.zoomLevel > 15 ? '20px' : '10px')
-    .attr('x', (d, i) => {
-      const coordinates = this.project((d as any).geometry.coordinates)
-      return coordinates && coordinates.x ? `${coordinates.x}px` : '0px';
-    })
-    .attr('y', (d, i) => {
-      const coordinates = this.project((d as any).geometry.coordinates)
-      return coordinates && coordinates.y ? `${coordinates.y}px` : '0px';
-    });
+    this.mapService.renderD3Trees(this.map, this.graphContainer, this.displayedTreesData, this.zoomLevel);
   }
 
   private updateData = (zoomingIn: boolean) => {

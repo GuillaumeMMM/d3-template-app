@@ -10,7 +10,7 @@ export class ClusterService {
   constructor() { 
   }
 
-  private ratioScale = d3.scaleLinear().domain([7, 14.5]).range([0.05, 0.001]);
+  private ratioScale = d3.scaleLinear().domain([6, 13.5]).range([0.1, 0.001]);
   private treeGroupsSnapshot: TreeGroup[] = [];
 
   public getClusterData = (trees: FeatureTree[], zoom: number = 10, zoomingIn: boolean = false): TreeGroup[] => {
@@ -62,42 +62,4 @@ export class ClusterService {
   private getRatioForZoom = (zoom: number): number => {
     return this.ratioScale(zoom);
   }
-
-  /* private computeGroupCeters = (groups: TreeGroup[]): TreeGroup[] => {
-    return groups.map(group => {
-      return {
-        ...group,
-        geometry: {
-          ...group.geometry,
-          coordinates: this.averageGeolocation(group.trees.map(tree => tree.geometry.coordinates) as [number, number][])}
-      }
-    })
-  } */
-
-  /* private averageGeolocation = (coords: [number, number][]) => {
-    let x = 0.0;
-    let y = 0.0;
-    let z = 0.0;
-  
-    for (let coord of coords) {
-      let latitude = coord[0] * Math.PI / 180;
-      let longitude = coord[1] * Math.PI / 180;
-  
-      x += Math.cos(latitude) * Math.cos(longitude);
-      y += Math.cos(latitude) * Math.sin(longitude);
-      z += Math.sin(latitude);
-    }
-  
-    let total = coords.length;
-  
-    x = x / total;
-    y = y / total;
-    z = z / total;
-  
-    let centralLongitude = Math.atan2(y, x);
-    let centralSquareRoot = Math.sqrt(x * x + y * y);
-    let centralLatitude = Math.atan2(z, centralSquareRoot);
-  
-    return [centralLatitude * 180 / Math.PI, centralLongitude * 180 / Math.PI];
-  } */
 }

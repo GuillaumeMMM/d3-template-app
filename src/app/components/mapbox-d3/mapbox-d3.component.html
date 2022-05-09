@@ -1,6 +1,9 @@
 <div class="graph-container">
     <div id="map" style="height: 100%; width: 100%; position: relative; z-index: 0;"></div>
-    <div class="details">
-        <app-point-detail [text]="''"></app-point-detail>
+    <div class="details" *ngIf="(mapInfoService.hoverCluster$ | async) as hoverCluster">
+        <app-point-detail [cluster]="hoverCluster"></app-point-detail>
+    </div>
+    <div class="button-link">
+        <button class="arb-button" type="button" [routerLink]="['/story']" routerLinkActive="router-link-active" >Read the story →</button>
     </div>
 </div>

@@ -1,2 +1,50 @@
 /* You can add global styles to this file, and also import other style files */
 @import './reset.scss';
+
+$color-primary: rgb(10, 158, 59);
+$background-primary: linear-gradient(144deg, rgb(10, 158, 59) 0%, rgb(14, 177, 69) 28%, rgb(11, 139, 54) 100%);
+$background-box-shadow: 2px 10px 44px 17px rgba(0, 0, 0, 0.16);
+
+body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    /* font-family: 'Publico Text Web',Georgia,Times,serif; */
+}
+
+.mapboxgl-control-container {
+    display: none;
+}
+
+.cluster, .tree {
+    cursor: pointer;
+}
+
+.arb-gradient-background {
+    background: $color-primary;
+    background: $background-primary;
+}
+
+.arb-background-box-shadow {
+    -webkit-box-shadow: $background-box-shadow;
+    -moz-box-shadow: $background-box-shadow;
+    box-shadow: $background-box-shadow;
+}
+
+button.arb-button {
+    background: $background-primary;
+    -webkit-box-shadow: $background-box-shadow;
+    -moz-box-shadow: $background-box-shadow;
+    box-shadow: $background-box-shadow;
+    border-radius: 8px;
+    padding: 10px 1rem;
+    color: white;
+    cursor: pointer;
+    border: 2px solid $color-primary;
+
+    &:hover {
+        border: 2px solid white;
+    }
+}
+
+.arb-title {
+    font-size: 3rem;
+}

@@ -1,17 +1,25 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { TreeGroup, TreeProperties } from 'src/app/models/arbre';
+import { PreferenceService } from 'src/app/services/preference.service';
 
 @Component({
   selector: 'app-point-detail',
   templateUrl: './point-detail.component.html',
   styleUrls: ['./point-detail.component.scss']
 })
-export class PointDetailComponent implements OnInit {
+export class PointDetailComponent implements OnChanges {
 
-  constructor() { }
+  constructor(public preferenceService: PreferenceService) { }
 
-  @Input() text: string = '';
+  @Input() cluster: TreeGroup | null = null;
 
-  ngOnInit(): void {
+  public treeKinds: {kind: string, count: number}[] = [];
+  public treeProperties: (keyof TreeProperties)[] = ['genre', 'libellefrancais', 'dateplantation'];
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['cluster'] && changes['cluster']['currentValue'] && this.cluster) {
+      this.treeKinds = this.preferenceService.getClusterStats(this.cluster, 5);
+    }
   }
 
 }

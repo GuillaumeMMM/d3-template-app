@@ -1,3 +1,47 @@
 .point-detail-container {
-    padding: 10px;
+    color: white;
+    /*  background-color: rgb(26, 35, 83); */
+    min-width: 240px;
+    margin: 10px;
+    border-radius: 8px;
+
+    .detail-header {
+        padding: 1rem 10px;
+        border-bottom: 2px solid white;
+    }
+
+    .detail-body {
+        padding: 1rem 10px;
+    }
+
+    li {
+        &:not(:last-child) {
+            margin-bottom: 10px;
+        }
+    }
+
+    ul.dotted-list {
+        li {
+            display: flex;
+        }
+
+        .kind-name {
+            order: 1;
+        }
+
+        .kind-count {
+            order: 3;
+        }
+
+        & > li::after {
+            background-image: radial-gradient(circle, currentcolor 1px, transparent 1.5px);
+            background-position: bottom;
+            background-size: 1ex 4.5px;
+            background-repeat: space no-repeat;
+            content: "";
+            flex-grow: 1;
+            height: 1em;
+            order: 2;
+        }
+    }
 }

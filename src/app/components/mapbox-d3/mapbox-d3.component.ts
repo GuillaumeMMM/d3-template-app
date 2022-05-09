@@ -4,10 +4,10 @@ import { WindowService } from 'src/app/services/window.service';
 import mapboxgl, { MapBoxZoomEvent } from 'mapbox-gl';
 import * as d3 from 'd3';
 import { environment } from 'src/environments/environment';
-import { EmojiService } from 'src/app/services/emoji.service';
 import { ClusterService } from 'src/app/services/cluster.service';
 import { FeatureTree, TreeGroup } from 'src/app/models/arbre';
 import { MapService } from 'src/app/services/map.service';
+import { MapInfoService } from 'src/app/services/map-info.service';
 
 @Component({
   selector: 'app-mapbox-d3',
@@ -16,7 +16,7 @@ import { MapService } from 'src/app/services/map.service';
 })
 export class MapboxD3Component implements OnInit, AfterViewInit, OnDestroy {
 
-  constructor(private el: ElementRef, private windowService: WindowService, private clusterService: ClusterService, private mapService: MapService) { }
+  constructor(private el: ElementRef, private windowService: WindowService, private clusterService: ClusterService, private mapService: MapService, public mapInfoService: MapInfoService) { }
 
   private destroySubject$: Subject<void> = new Subject;
   private width: number = 0;
@@ -52,7 +52,7 @@ export class MapboxD3Component implements OnInit, AfterViewInit, OnDestroy {
       container: 'map',
       style: 'mapbox://styles/guillaumemmm/cl1l2bik7000n15plm468rsxh',
       center: [2.349014, 48.864716],
-      minZoom: 7.5,
+      minZoom: 9,
       maxZoom: 17,
       zoom: this.zoomLevelSnapshot,
       accessToken: environment.mapboxToken
@@ -107,7 +107,7 @@ export class MapboxD3Component implements OnInit, AfterViewInit, OnDestroy {
     
     this.displayedTreesData = this.treesData.filter(group => this.clusterService.isVisibleElement(group, xBound, yBound)).slice().filter(tree => tree.trees && tree.trees.length > 0);
     
-    this.mapService.renderD3Trees(this.map, this.graphContainer, this.displayedTreesData, this.zoomLevel);
+    this.mapService.renderD3Trees(this.map, this.graphContainer, this.displayedTreesData);
   }
 
   private updateData = (zoomingIn: boolean) => {

@@ -6,13 +6,15 @@ import { AppComponent } from './app.component';
 import { GraphComponent } from './components/graph/graph.component';
 import { PointDetailComponent } from './components/point-detail/point-detail.component';
 import { MapboxD3Component } from './components/mapbox-d3/mapbox-d3.component';
+import { StoryComponent } from './components/story/story.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     GraphComponent,
     PointDetailComponent,
-    MapboxD3Component
+    MapboxD3Component,
+    StoryComponent
   ],
   imports: [
     BrowserModule,

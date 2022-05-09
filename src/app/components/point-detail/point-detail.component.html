@@ -1,3 +1,40 @@
-<div class="point-detail-container">
-    {{text}}
+<div class="point-detail-container arb-gradient-background arb-background-box-shadow" *ngIf="cluster">
+    <ng-container *ngIf="(cluster.trees || []).length > 1; else singleTreeCluster">
+        <div class="detail-header">
+            <ul class="dotted-list">
+                <li>
+                    <span class="kind-name">
+                        Total
+                    </span>
+                    <span class="kind-count">
+                        {{cluster.trees.length}}
+                    </span>
+                </li>
+            </ul>
+        </div>
+        <div class="detail-body">
+            <ul class="dotted-list">
+                <li *ngFor="let treeKind of treeKinds">
+                    <span class="kind-name">
+                        {{preferenceService.treeEmoji}} &nbsp;{{treeKind.kind}}
+                    </span>
+                    <span class="kind-count">
+                        {{treeKind.count}}
+                    </span>
+                </li>
+            </ul>
+        </div>
+    </ng-container>
+
+    <ng-template #singleTreeCluster>
+        <div class="detail-body" *ngIf="cluster.trees && cluster.trees.length === 1">
+            <ul>
+                <ng-container *ngFor="let param of treeProperties">
+                    <li *ngIf="cluster.trees[0]?.properties && cluster.trees[0].properties[param]">
+                        {{cluster.trees[0].properties[param]}}
+                    </li>
+                </ng-container>
+            </ul>
+        </div>
+    </ng-template>
 </div>
